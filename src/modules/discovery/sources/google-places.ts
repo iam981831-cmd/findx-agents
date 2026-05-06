@@ -53,22 +53,37 @@ export interface GooglePlacesConfig {
   apiKey: string;
 }
 
-function buildSearchQuery(params: DiscoveryParams): string {
-  const parts: string[] = ["business"];
-  if (params.industry) parts.push(params.industry);
-  if (params.city) parts.push(`in ${params.city}`);
-  else parts.push("in Netherlands");
+const GERMAN_CITIES = [
+  "Berlin", "Hamburg", "München", "Frankfurt", "Köln", "Leipzig",
+  "Stuttgart", "Düsseldorf", "Dresden", "Hannover", "Nürnberg", "Bremen",
+  "Dortmund", "Essen", "Duisburg", "Bochum", "Wuppertal", "Bielefeld",
+  "Bonn", "Münster",
+];
+
+/** Return true if the query already names a German city (or Deutschland/Germany). */
+function hasCityInQuery(query: string): boolean {
+  if (/deutschland|germany/i.test(query)) return true;
+  return GERMAN_CITIES.some((c) => new RegExp(`\\b${c}\\b`, "i").test(query));
+}
+
+function buildSearchQuery(industry: string | undefined, city: string): string {
+  const parts: string[] = [];
+  if (industry) parts.push(industry);
+  parts.push(`in ${city} Deutschland`);
   return parts.join(" ");
 }
 
 function extractCity(address: string): string {
-  // Dutch addresses typically end with "1234 AB City" or "1234AB City"
-  const match = address.match(/\d{4}\s?[A-Z]{2}\s+(.+?)(?:,\s*Netherlands)?$/i);
-  if (match) return match[1].trim();
-  // Fallback: last comma-separated segment
+  // German: "12345 Berlin, Germany"
+  const deMatch = address.match(/\d{5}\s+([^,]+)/);
+  if (deMatch) return deMatch[1].trim();
+  // Dutch: "1234 AB City"
+  const nlMatch = address.match(/\d{4}\s?[A-Z]{2}\s+(.+?)(?:,\s*Netherlands)?$/i);
+  if (nlMatch) return nlMatch[1].trim();
+  // Fallback: second-to-last comma segment (before country)
   const segments = address.split(",").map((s) => s.trim());
-  const last = segments[segments.length - 1];
-  return last?.replace(/Netherlands/i, "").trim() || "Unknown";
+  if (segments.length >= 2) return segments[segments.length - 2].replace(/\d+/g, "").trim() || segments[segments.length - 2].trim();
+  return segments[segments.length - 1]?.trim() || "Unknown";
 }
 
 export class GooglePlacesSource {
@@ -84,64 +99,129 @@ export class GooglePlacesSource {
     params: DiscoveryParams,
   ): AsyncGenerator<DiscoveredLead, void, undefined> {
     const limit = params.limit ?? 500;
+
+    // Determine which cities to search
+    // If a city is provided OR the industry string already contains a city/country,
+    // search only that single city. Otherwise fan out across all major German cities.
+    const industryStr = params.industry ?? "";
+    const cities: string[] =
+      params.city
+        ? [params.city]
+        : hasCityInQuery(industryStr)
+          ? [industryStr] // treat the whole string as the query; city extracted below
+          : GERMAN_CITIES;
+
+    // Cross-run dedup: website URL and placeId seen so far
+    const seenWebsites = new Set<string>();
+    const seenPlaceIds = new Set<string>();
     let totalFetched = 0;
-    let pageToken: string | undefined;
 
-    const query = buildSearchQuery(params);
+    for (const city of cities) {
+      if (totalFetched >= limit) break;
 
-    while (totalFetched < limit) {
-      await this.rateLimiter.acquire();
+      const query = params.city || hasCityInQuery(industryStr)
+        ? buildSearchQuery(params.industry, city)
+        : buildSearchQuery(industryStr, city);
 
-      const qs = new URLSearchParams({
-        query,
-        key: this.apiKey,
-        language: "nl",
-      });
-      if (pageToken) qs.set("pagetoken", pageToken);
+      let pageToken: string | undefined;
 
-      const response = await fetch(`${PLACES_SEARCH_URL}?${qs}`);
-      if (!response.ok) {
-        throw new Error(`Google Places API error: ${response.status}`);
+      while (totalFetched < limit) {
+        await this.rateLimiter.acquire();
+
+        const lang = process.env.DEFAULT_LANGUAGE ?? "de";
+        const region = process.env.DEFAULT_COUNTRY?.toLowerCase() ?? "de";
+        const qs = new URLSearchParams({
+          query,
+          key: this.apiKey,
+          language: lang,
+          region,
+        });
+        if (pageToken) qs.set("pagetoken", pageToken);
+
+        const response = await fetch(`${PLACES_SEARCH_URL}?${qs}`);
+        if (!response.ok) {
+          throw new Error(`Google Places API error: ${response.status}`);
+        }
+
+        const data = (await response.json()) as GoogleSearchResponse;
+
+        if (data.status !== "OK" && data.status !== "ZERO_RESULTS") {
+          throw new Error(
+            `Google Places error: ${data.status} — ${data.error_message ?? "unknown"}`,
+          );
+        }
+
+        if (!data.results?.length) break;
+
+        for (const place of data.results) {
+          if (totalFetched >= limit) break;
+
+          // Skip duplicate place IDs across city searches
+          if (seenPlaceIds.has(place.place_id)) continue;
+          seenPlaceIds.add(place.place_id);
+
+          // Skip publicly listed companies (AG, GmbH & Co. KGaA, SE, Plc)
+          if (/\b(AG|SE|KGaA|Plc|GmbH\s*&\s*Co\.\s*KGaA)\b/.test(place.name)) continue;
+
+          // Skip large national chains
+          if (/\b(Vonovia|Deutsche Wohnen|LEG|TAG Immobilien|Patrizia|Gewobag|Degewo|SAGA|WBM)\b/i.test(place.name)) continue;
+
+          // Skip high-rated companies (4.2+ well-established)
+          if (place.rating != null && place.rating > 4.2) continue;
+
+          // Skip suspiciously perfect with no reviews
+          if (place.rating != null && place.rating >= 4.8 && (place.user_ratings_total ?? 0) < 5) continue;
+
+          // Skip companies with too few reviews (not a real active business)
+          if ((place.user_ratings_total ?? 0) < 10) continue;
+
+          // Skip large orgs (500+ reviews = chain/franchise)
+          if (place.user_ratings_total != null && place.user_ratings_total > 500) continue;
+
+          // Get details (website, phone) for each place
+          const details = await this.getDetails(place.place_id);
+
+          // Skip duplicate websites across city searches
+          if (details?.website) {
+            const normalizedUrl = details.website.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "").toLowerCase();
+            if (seenWebsites.has(normalizedUrl)) continue;
+            seenWebsites.add(normalizedUrl);
+          }
+
+          // Compute Mittelstand priority score
+          const rating = place.rating ?? 3.0;
+          const reviewCount = place.user_ratings_total ?? 0;
+          const ratingBoost = rating <= 3.5 ? 20 : rating <= 4.0 ? 10 : 0;
+          const ratingPenalty = rating >= 4.5 ? -20 : 0;
+          const reviewPenalty = reviewCount >= 300 ? -15 : 0;
+          const mittelstandScore = 50 + ratingBoost + ratingPenalty + reviewPenalty;
+
+          const lead: DiscoveredLead = {
+            businessName: place.name,
+            address: place.formatted_address,
+            city: extractCity(place.formatted_address),
+            industry: params.industry,
+            website: details?.website,
+            phone:
+              details?.international_phone_number ??
+              details?.formatted_phone_number,
+            source: "google",
+            sourceId: place.place_id,
+            notes: JSON.stringify({
+              googleRating: place.rating ?? null,
+              googleRatingsTotal: place.user_ratings_total ?? null,
+              mittelstandScore,
+            }),
+          };
+
+          yield lead;
+          totalFetched++;
+        }
+
+        if (!data.next_page_token) break;
+        pageToken = data.next_page_token;
+        await new Promise((r) => setTimeout(r, 2000));
       }
-
-      const data = (await response.json()) as GoogleSearchResponse;
-
-      if (data.status !== "OK" && data.status !== "ZERO_RESULTS") {
-        throw new Error(
-          `Google Places error: ${data.status} — ${data.error_message ?? "unknown"}`,
-        );
-      }
-
-      if (!data.results?.length) break;
-
-      for (const place of data.results) {
-        if (totalFetched >= limit) return;
-
-        // Get details (website, phone) for each place
-        const details = await this.getDetails(place.place_id);
-
-        const lead: DiscoveredLead = {
-          businessName: place.name,
-          address: place.formatted_address,
-          city: extractCity(place.formatted_address),
-          industry: params.industry,
-          website: details?.website,
-          phone:
-            details?.international_phone_number ??
-            details?.formatted_phone_number,
-          source: "google",
-          sourceId: place.place_id,
-        };
-
-        yield lead;
-        totalFetched++;
-      }
-
-      // Check for next page
-      if (!data.next_page_token) break;
-      pageToken = data.next_page_token;
-      // Google requires a short delay before using next_page_token
-      await new Promise((r) => setTimeout(r, 2000));
     }
   }
 
@@ -155,7 +235,7 @@ export class GooglePlacesSource {
       key: this.apiKey,
       fields:
         "name,formatted_address,formatted_phone_number,international_phone_number,website,url,types,business_status",
-      language: "nl",
+      language: process.env.DEFAULT_LANGUAGE ?? "de",
     });
 
     const response = await fetch(`${PLACE_DETAILS_URL}?${qs}`);

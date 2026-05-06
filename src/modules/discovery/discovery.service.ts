@@ -42,6 +42,7 @@ export interface DiscoveredLead {
   sourceId?: string;
   /** Extra fields not in original interface but needed downstream */
   postcode?: string;
+  notes?: string;
 }
 
 export interface DiscoveryResult {
@@ -194,6 +195,12 @@ export class DiscoveryService {
           source: lead.enrichmentSources.join(","),
           sourceId: lead.sourceId,
           status: "discovered",
+          leadScore: (() => {
+            try {
+              const meta = lead.notes ? JSON.parse(lead.notes) : {};
+              return typeof meta.mittelstandScore === "number" ? meta.mittelstandScore : null;
+            } catch { return null; }
+          })(),
         },
         update: {
           // Update with richer data if we have it

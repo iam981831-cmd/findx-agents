@@ -5,7 +5,7 @@ import { registerRoutes } from "./routes/index.js";
 import { startAgentWorker } from "./workers/agent-worker.js";
 
 const PORT = parseInt(process.env.PORT || "3001", 10);
-const HOST = process.env.NODE_ENV === "production" ? "0.0.0.0" : "127.0.0.1";
+const HOST = "0.0.0.0";
 
 async function main() {
   const app = Fastify({ logger: true });

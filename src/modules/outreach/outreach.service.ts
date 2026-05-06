@@ -49,6 +49,39 @@ export interface OutreachRequest {
  * Generate an outreach email for a lead using Claude AI.
  * Creates an Outreach record in draft status.
  */
+function buildViegoEmail(businessName: string, city: string): GeneratedEmail {
+  return {
+    subject: `24/7 erreichbar für Ihre Mieter – KI-Assistent für ${businessName}`,
+    body: `Sehr geehrte Damen und Herren,
+
+bei meiner Recherche zu Hausverwaltungen in ${city} bin ich auf ${businessName} aufmerksam geworden.
+
+Viego AI ist ein KI-Assistent speziell für die Immobilienwirtschaft:
+- Beantwortet Mieteranfragen rund um die Uhr – automatisch
+- Nimmt Schadensmeldungen strukturiert entgegen
+- Entlastet Ihr Team von repetitiven Routineaufgaben
+- 100% DSGVO-konform, Hosting in Deutschland
+
+Damit Sie sich selbst ein Bild machen können:
+🌐 www.viego-ai.de
+💬 viego-ai.de/chat-demo
+
+Mit freundlichen Grüßen
+Mustafa
+Viego AI
+info@viego-ai.de`,
+    htmlBody: "",
+    language: "de",
+    tone: "professional",
+    personalizedDetails: {
+      specificInsight: "",
+      improvementArea: "KI-Assistent für automatische Mieteranfragen",
+      estimatedImpact: "",
+      contactName: "Damen und Herren",
+    },
+  };
+}
+
 export async function generateOutreachEmail(
   leadId: string,
   options?: {
@@ -60,58 +93,11 @@ export async function generateOutreachEmail(
 ): Promise<{ outreach: GeneratedEmail; variants?: Record<EmailTone, GeneratedEmail> }> {
   const lead = await prisma.lead.findUnique({
     where: { id: leadId },
-    include: {
-      analyses: {
-        orderBy: { analyzedAt: "desc" },
-        take: 1,
-      },
-    },
   });
 
   if (!lead) throw new Error(`Lead ${leadId} not found`);
 
-  // Use specified analysis or latest
-  const analysis = options?.analysisId
-    ? await prisma.analysis.findUnique({ where: { id: options.analysisId } })
-    : lead.analyses[0];
-
-  // Build lead context for AI generation
-  const leadContext: LeadContext = {
-    businessName: lead.businessName,
-    industry: lead.industry ?? undefined,
-    city: lead.city,
-    hasWebsite: lead.hasWebsite,
-    website: lead.website ?? undefined,
-    contactName: lead.businessName, // No separate contact model yet
-    findings: analysis?.findings
-      ? (Array.isArray(analysis.findings) ? analysis.findings as Array<{
-          category: string;
-          title: string;
-          description: string;
-          severity: "critical" | "warning" | "info";
-        }> : [])
-      : [],
-    opportunities: analysis?.opportunities
-      ? (Array.isArray(analysis.opportunities) ? analysis.opportunities as Array<{
-          title: string;
-          description: string;
-          impact: string;
-        }> : [])
-      : [],
-    overallScore: analysis?.score ?? undefined,
-  };
-
-  const tone = options?.tone ?? "professional";
-  const language = options?.language ?? "en";
-
-  // Generate primary email
-  const email = await generatePersonalizedEmail(leadContext, tone, language);
-
-  // Optionally generate all tone variants
-  let variants: Record<EmailTone, GeneratedEmail> | undefined;
-  if (options?.generateVariants) {
-    variants = await generateToneVariants(leadContext, language);
-  }
+  const email = buildViegoEmail(lead.businessName, lead.city);
 
   // Persist the primary email as a draft Outreach record
   await prisma.outreach.create({
@@ -120,7 +106,7 @@ export async function generateOutreachEmail(
       status: "draft",
       subject: email.subject,
       body: email.body,
-      personalizedDetails: JSON.parse(JSON.stringify(email.personalizedDetails)),
+      personalizedDetails: {},
     },
   });
 
@@ -130,7 +116,7 @@ export async function generateOutreachEmail(
     data: { status: "contacting" },
   });
 
-  return { outreach: email, variants };
+  return { outreach: email };
 }
 
 /**

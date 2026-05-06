@@ -95,6 +95,20 @@ export async function deduplicateBatch(
     }
   }
 
+  // Check by website URL against DB (fast dedup for Google sources)
+  const leadsWithWebsite = afterBatchDedup.filter((l) => l.website);
+  const existingByWebsite: Map<string, string> = new Map();
+  if (leadsWithWebsite.length > 0) {
+    const websites = leadsWithWebsite.map((l) => l.website!);
+    const existing = await prisma.lead.findMany({
+      where: { website: { in: websites } },
+      select: { id: true, website: true },
+    });
+    for (const row of existing) {
+      if (row.website) existingByWebsite.set(row.website, row.id);
+    }
+  }
+
   // Check by name+city for leads without KVK number
   const leadsWithoutKvk = afterBatchDedup.filter((l) => !l.kvkNumber);
   const existingByNameCity: Map<string, string> = new Map();
@@ -129,6 +143,15 @@ export async function deduplicateBatch(
     // Check KVK match
     if (lead.kvkNumber) {
       const existingId = existingByKvk.get(lead.kvkNumber);
+      if (existingId) {
+        result.existingMatches.push({ lead, existingId });
+        continue;
+      }
+    }
+
+    // Check website URL match
+    if (lead.website) {
+      const existingId = existingByWebsite.get(lead.website);
       if (existingId) {
         result.existingMatches.push({ lead, existingId });
         continue;

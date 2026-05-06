@@ -21,8 +21,8 @@ export const renderTemplateTool: Tool = {
       },
       language: {
         type: "string",
-        enum: ["en", "nl", "ar"],
-        description: "Email language (default: en)",
+        enum: ["en", "nl", "ar", "de"],
+        description: "Email language. Use 'de' for German (Viego AI chatbot pitch). Default: 'de'.",
       },
       company_name: { type: "string" },
       contact_name: { type: "string" },
@@ -35,7 +35,8 @@ export const renderTemplateTool: Tool = {
     required: ["has_website", "company_name", "contact_name", "city"],
   },
   async execute(input) {
-    const language = (input.language as "en" | "nl" | "ar") || "en";
+    const rawLang = (input.language as string) || "de";
+    const language = (["en", "nl", "ar", "de"].includes(rawLang) ? rawLang : "de") as "en" | "nl" | "ar" | "de";
     const template = pickColdTemplate(input.has_website as boolean, language);
     // Strip em dashes from agent-generated content
     const strip = (s: string) => s
@@ -46,13 +47,13 @@ export const renderTemplateTool: Tool = {
     const vars: TemplateVariables = {
       companyName: strip(input.company_name as string),
       contactName: strip(input.contact_name as string),
-      industry: (input.industry as string) ?? "lokale markt",
+      industry: (input.industry as string) ?? "Immobilienwirtschaft",
       city: input.city as string,
       specificInsight: strip((input.specific_insight as string) || ""),
       improvementArea: strip((input.improvement_area as string) || ""),
       estimatedImpact: strip((input.estimated_impact as string) || ""),
-      senderName: "FindX",
-      meetingLink: "https://findx.nl/plan-gesprek",
+      senderName: "Mustafa",
+      meetingLink: "https://viego-ai.de/chat-demo",
     };
 
     const result = renderTemplate(template, vars);

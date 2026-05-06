@@ -3,7 +3,7 @@
 // Dutch templates use formal "u" register for professional business communication
 
 export type EmailTone = "professional" | "friendly" | "urgent";
-export type EmailLanguage = "en" | "nl" | "ar";
+export type EmailLanguage = "en" | "nl" | "ar" | "de";
 
 export interface TemplateVariables {
   companyName: string;
@@ -28,272 +28,409 @@ export interface EmailTemplate {
 }
 
 const TEMPLATES: EmailTemplate[] = [
-  // --- Dutch templates (conversational, professional) ---
+  // --- Dutch templates (redirected to German Viego AI pitch) ---
   {
     id: "nl_cold_no_website",
-    name: "Cold Outreach, geen website (NL)",
+    name: "Cold Outreach, kein Website (NL→DE)",
     category: "cold_no_website",
     language: "nl",
-    subject: "{{companyName}} online vindbaar maken",
-    body: `Hi {{contactName}},
+    subject: "24/7 erreichbar für Ihre Mieter – KI-Assistent für {{companyName}}",
+    body: `Sehr geehrte Damen und Herren,
 
-Ik keek recent naar de online aanwezigheid van {{industry}}-bedrijven in {{city}}. Wat me opviel: {{companyName}} heeft geen website.
+bei meiner Recherche zu Hausverwaltungen in {{city}} bin ich auf {{companyName}} aufmerksam geworden.
 
-In de {{industry}} zoekt 7 van de 10 klanten online naar een aanbieder. Zonder website bereikt u die groep niet. Concurrenten in {{city}} met een website krijgen die aanvragen al binnen.
+Viego AI ist ein KI-Assistent speziell für die Immobilienwirtschaft:
+- Beantwortet Mieteranfragen rund um die Uhr – automatisch
+- Nimmt Schadensmeldungen strukturiert entgegen
+- Entlastet Ihr Team von repetitiven Routineaufgaben
+- 100% DSGVO-konform, Hosting in Deutschland
 
-Ik kan voor {{companyName}} een website opzetten die:
-- Gevonden wordt bij lokale zoekopdrachten in {{city}}
-- Past bij uw bedrijfsvoering
-- Binnen twee weken online staat
+Demo: viego-ai.de/chat-demo
 
-Zullen we kort bellen? 15 minuten is genoeg om de mogelijkheden te bespreken.
-
-[Plan een gesprek]({{meetingLink}})
-
-Groet,
-{{senderName}}`,
+Mit freundlichen Grüßen
+Mustafa
+Viego AI
+info@viego-ai.de`,
   },
   {
     id: "nl_cold_has_website",
-    name: "Cold Outreach, verbetermogelijkheden (NL)",
+    name: "Cold Outreach, mit Website (NL→DE)",
     category: "cold_has_website",
     language: "nl",
-    subject: "Iets opgevallen aan de site van {{companyName}}",
-    body: `Hi {{contactName}},
+    subject: "24/7 erreichbar für Ihre Mieter – KI-Assistent für {{companyName}}",
+    body: `Sehr geehrte Damen und Herren,
 
-Ik bekeek de website van {{companyName}} en één ding viel me op: {{specificInsight}}.
+bei meiner Recherche zu Hausverwaltungen in {{city}} bin ich auf {{companyName}} aufmerksam geworden. {{specificInsight}}.
 
-Bedrijven in de {{industry}} die dit soort punten aanpakken zien gemiddeld {{estimatedImpact}}. De logische volgende stap voor {{companyName}}: {{improvementArea}}.
+Viego AI ist ein KI-Assistent speziell für die Immobilienwirtschaft:
+- Beantwortet Mieteranfragen rund um die Uhr – automatisch
+- Nimmt Schadensmeldungen strukturiert entgegen
+- Entlastet Ihr Team von repetitiven Routineaufgaben
+- 100% DSGVO-konform, Hosting in Deutschland
 
-Ik heb de volledige analyse met aanbevelingen klaar. Zullen we 15 min bellen zodat ik de bevindingen kan laten zien?
+Demo: viego-ai.de/chat-demo
 
-[Plan een gesprek]({{meetingLink}})
-
-Groet,
-{{senderName}}`,
+Mit freundlichen Grüßen
+Mustafa
+Viego AI
+info@viego-ai.de`,
   },
   {
     id: "nl_followup_1",
-    name: "Follow-Up 1, 3 dagen (NL)",
+    name: "Follow-Up 1, 3 Tage (NL→DE)",
     category: "followup_1",
     language: "nl",
-    subject: "Re: {{originalSubject}}",
-    body: `Hi {{contactName}},
+    subject: "Kurze Nachfrage: KI-Assistent für {{companyName}}",
+    body: `Sehr geehrte Damen und Herren,
 
-Korte follow-up naar aanleiding van mijn analyse van {{companyName}}. Ik snap dat u het druk heeft, daarom houd ik het kort.
+ich wollte kurz nachfragen, ob meine letzte Nachricht angekommen ist.
 
-De bevindingen blijven actueel. Als het uitkomt plan ik graag een moment dat beter past.
+Demo verfügbar: viego-ai.de/chat-demo
 
-[Plan een gesprek]({{meetingLink}})
-
-Groet,
-{{senderName}}`,
+Mit freundlichen Grüßen
+Mustafa
+Viego AI
+info@viego-ai.de`,
   },
   {
     id: "nl_followup_2",
-    name: "Follow-Up 2, 7 dagen (NL)",
+    name: "Follow-Up 2, 7 Tage (NL→DE)",
     category: "followup_2",
     language: "nl",
-    subject: "Nog één ding over {{companyName}}",
-    body: `Hi {{contactName}},
+    subject: "Letzte Nachricht: Viego AI für {{companyName}}",
+    body: `Sehr geehrte Damen und Herren,
 
-Nog één ding. Bij vergelijking met andere {{industry}}-bedrijven in {{city}} mist {{companyName}} een duidelijke kans: {{specificInsight}}.
+ich melde mich ein letztes Mal bezüglich des Viego AI Assistenten für {{companyName}}.
 
-Bedrijven die dit oppakken zien doorgaans {{estimatedImpact}}. Ik bewaar de analyse voor u.
+Hausverwaltungen reduzieren mit Viego AI den Aufwand für Routineanfragen um durchschnittlich 60%. Demo: viego-ai.de/chat-demo
 
-Mocht u later geïnteresseerd zijn: [15 min bellen]({{meetingLink}}). Zo niet, dan stuur ik niets meer.
-
-Groet,
-{{senderName}}`,
+Mit freundlichen Grüßen
+Mustafa
+Viego AI
+info@viego-ai.de`,
   },
   {
     id: "nl_breakup",
-    name: "Break-Up, 14 dagen (NL)",
+    name: "Break-Up, 14 Tage (NL→DE)",
     category: "breakup",
     language: "nl",
-    subject: "Analyse {{companyName}} bewaard",
-    body: `Hi {{contactName}},
+    subject: "Kein weiterer Kontakt von unserer Seite",
+    body: `Sehr geehrte Damen und Herren,
 
-Dit is mijn laatste bericht. Ik begrijp dat de timing nu niet uitkomt.
+dies ist meine letzte Nachricht. Ich verstehe, dass der Zeitpunkt gerade nicht passt.
 
-De analyse van {{companyName}} bewaar ik. Als u later de online aanwezigheid wilt verbeteren kunt u de bevindingen [hier bekijken]({{meetingLink}}).
+Bei Interesse finden Sie uns unter viego-ai.de.
 
-Veel succes met {{companyName}}.
-
-Groet,
-{{senderName}}`,
+Mit freundlichen Grüßen
+Mustafa
+Viego AI
+info@viego-ai.de`,
   },
   {
     id: "nl_meeting_confirm",
-    name: "Afspraakbevestiging (NL)",
+    name: "Terminbestätigung (NL→DE)",
     category: "meeting_confirm",
     language: "nl",
-    subject: "Afspraak bevestigd: {{companyName}}",
-    body: `Hi {{contactName}},
+    subject: "Terminbestätigung: Viego AI Demo für {{companyName}}",
+    body: `Sehr geehrte Damen und Herren,
 
-Bedankt voor uw tijd. Onze afspraak om de website-analyse van {{companyName}} te bespreken staat hierbij bevestigd.
+vielen Dank für Ihr Interesse. Unser Demo-Termin für {{companyName}} ist bestätigt.
 
-Ik loop u door de bevindingen en geef concrete suggesties. Max 15 minuten.
+Demo: viego-ai.de/chat-demo
 
-[Bevestig de afspraak]({{meetingLink}})
-
-Groet,
-{{senderName}}`,
+Mit freundlichen Grüßen
+Mustafa
+Viego AI
+info@viego-ai.de`,
   },
   {
     id: "nl_proposal_followup",
-    name: "Voorstel follow-up (NL)",
+    name: "Angebots-Nachfrage (NL→DE)",
     category: "proposal_followup",
     language: "nl",
-    subject: "Samenvatting voorstel voor {{companyName}}",
-    body: `Hi {{contactName}},
+    subject: "Unser Angebot für {{companyName}}",
+    body: `Sehr geehrte Damen und Herren,
 
-Naar aanleiding van ons gesprek stuur ik u een samenvatting van de verbeterpunten voor {{companyName}}:
+anbei eine Zusammenfassung für {{companyName}}:
 
 {{improvementArea}}
 
-Verwachte impact: {{estimatedImpact}}.
+Bei Fragen stehe ich Ihnen gerne zur Verfügung.
 
-Laat me weten of u hiermee verder wilt gaan.
-
-[Bekijk het voorstel]({{meetingLink}})
-
-Groet,
-{{senderName}}`,
+Mit freundlichen Grüßen
+Mustafa
+Viego AI
+info@viego-ai.de`,
   },
 
-  // --- English templates (conversational, professional) ---
+  // --- English templates (redirected to German Viego AI pitch) ---
   {
     id: "en_cold_no_website",
-    name: "Cold Outreach, no website (EN)",
+    name: "Cold Outreach, kein Website (EN→DE)",
     category: "cold_no_website",
     language: "en",
-    subject: "Getting {{companyName}} found online",
-    body: `Hi {{contactName}},
+    subject: "24/7 erreichbar für Ihre Mieter – KI-Assistent für {{companyName}}",
+    body: `Sehr geehrte Damen und Herren,
 
-I was recently looking at the online presence of {{industry}} businesses in {{city}}. One thing stood out: {{companyName}} doesn't have a website.
+bei meiner Recherche zu Hausverwaltungen in {{city}} bin ich auf {{companyName}} aufmerksam geworden.
 
-In the {{industry}}, 7 out of 10 customers search online for a provider. Without a website, those potential clients find your competitors instead. Businesses in {{city}} with a web presence get those inquiries on autopilot.
+Viego AI ist ein KI-Assistent speziell für die Immobilienwirtschaft:
+- Beantwortet Mieteranfragen rund um die Uhr – automatisch
+- Nimmt Schadensmeldungen strukturiert entgegen
+- Entlastet Ihr Team von repetitiven Routineaufgaben
+- 100% DSGVO-konform, Hosting in Deutschland
 
-I can set up a website for {{companyName}} that:
-- Ranks for local searches in {{city}}
-- Fits your brand and professionalism
-- Goes live within two weeks
+Demo: viego-ai.de/chat-demo
 
-Worth a quick chat? 15 minutes is all I need to walk you through it.
-
-[Book a call]({{meetingLink}})
-
-Best,
-{{senderName}}`,
+Mit freundlichen Grüßen
+Mustafa
+Viego AI
+info@viego-ai.de`,
   },
   {
     id: "en_cold_has_website",
-    name: "Cold Outreach, improvement opportunities (EN)",
+    name: "Cold Outreach, mit Website (EN→DE)",
     category: "cold_has_website",
     language: "en",
-    subject: "Something I noticed about {{companyName}}'s site",
-    body: `Hi {{contactName}},
+    subject: "24/7 erreichbar für Ihre Mieter – KI-Assistent für {{companyName}}",
+    body: `Sehr geehrte Damen und Herren,
 
-I was looking at {{companyName}}'s website and one thing caught my eye: {{specificInsight}}.
+bei meiner Recherche zu Hausverwaltungen in {{city}} bin ich auf {{companyName}} aufmerksam geworden. {{specificInsight}}.
 
-Businesses in {{industry}} that fix this typically see {{estimatedImpact}}. The most impactful next step for {{companyName}}: {{improvementArea}}.
+Viego AI ist ein KI-Assistent speziell für die Immobilienwirtschaft:
+- Beantwortet Mieteranfragen rund um die Uhr – automatisch
+- Nimmt Schadensmeldungen strukturiert entgegen
+- Entlastet Ihr Team von repetitiven Routineaufgaben
+- 100% DSGVO-konform, Hosting in Deutschland
 
-I've got the full analysis with concrete recommendations ready. Want to jump on a 15-minute call so I can show you what I found?
+Demo: viego-ai.de/chat-demo
 
-[Book a call]({{meetingLink}})
-
-Best,
-{{senderName}}`,
+Mit freundlichen Grüßen
+Mustafa
+Viego AI
+info@viego-ai.de`,
   },
   {
     id: "en_followup_1",
-    name: "Follow-Up 1, 3 days (EN)",
+    name: "Follow-Up 1, 3 Tage (EN→DE)",
     category: "followup_1",
     language: "en",
-    subject: "Re: {{originalSubject}}",
-    body: `Hi {{contactName}},
+    subject: "Kurze Nachfrage: KI-Assistent für {{companyName}}",
+    body: `Sehr geehrte Damen und Herren,
 
-Quick follow-up on my analysis of {{companyName}}. I know you're busy so I'll keep it brief.
+ich wollte kurz nachfragen, ob meine letzte Nachricht angekommen ist.
 
-The findings are still relevant. Happy to find a time that works better for you.
+Falls Sie Interesse haben, den Viego AI Assistenten für {{companyName}} in einer kurzen Demo zu sehen: viego-ai.de/chat-demo
 
-[Book a call]({{meetingLink}})
-
-Best,
-{{senderName}}`,
+Mit freundlichen Grüßen
+Mustafa
+Viego AI
+info@viego-ai.de`,
   },
   {
     id: "en_followup_2",
-    name: "Follow-Up 2, 7 days (EN)",
+    name: "Follow-Up 2, 7 Tage (EN→DE)",
     category: "followup_2",
     language: "en",
-    subject: "One more thing about {{companyName}}",
-    body: `Hi {{contactName}},
+    subject: "Letzte Nachricht: Viego AI für {{companyName}}",
+    body: `Sehr geehrte Damen und Herren,
 
-One more thing. Comparing {{companyName}} to other {{industry}} businesses in {{city}}, there's a clear missed opportunity: {{specificInsight}}.
+ich melde mich ein letztes Mal bezüglich des Viego AI Assistenten für {{companyName}}.
 
-Companies that act on this typically see {{estimatedImpact}}. I'll keep the full analysis on file for you.
+Hausverwaltungen, die unseren KI-Assistenten einsetzen, reduzieren den Aufwand für Routineanfragen um durchschnittlich 60%. Demo: viego-ai.de/chat-demo
 
-If you'd like to discuss later: [15-minute call]({{meetingLink}}). If not, no worries, I won't follow up again.
-
-Best,
-{{senderName}}`,
+Mit freundlichen Grüßen
+Mustafa
+Viego AI
+info@viego-ai.de`,
   },
   {
     id: "en_breakup",
-    name: "Break-Up, 14 days (EN)",
+    name: "Break-Up, 14 Tage (EN→DE)",
     category: "breakup",
     language: "en",
-    subject: "Saved the analysis for {{companyName}}",
-    body: `Hi {{contactName}},
+    subject: "Kein weiterer Kontakt von unserer Seite",
+    body: `Sehr geehrte Damen und Herren,
 
-This is my last message. I get that the timing might not be right.
+dies ist meine letzte Nachricht. Ich verstehe, dass der Zeitpunkt gerade nicht passt.
 
-The analysis of {{companyName}} is saved. If you ever want to work on your online presence, you can [review the findings here]({{meetingLink}}).
+Falls Sie zu einem späteren Zeitpunkt Interesse haben: viego-ai.de
 
-Wishing {{companyName}} all the best.
-
-Best,
-{{senderName}}`,
+Mit freundlichen Grüßen
+Mustafa
+Viego AI
+info@viego-ai.de`,
   },
   {
     id: "en_meeting_confirm",
-    name: "Meeting Confirmation (EN)",
+    name: "Terminbestätigung (EN→DE)",
     category: "meeting_confirm",
     language: "en",
-    subject: "Confirmed: call about {{companyName}}",
-    body: `Hi {{contactName}},
+    subject: "Terminbestätigung: Viego AI Demo für {{companyName}}",
+    body: `Sehr geehrte Damen und Herren,
 
-Thanks for your time. Our call to discuss the website analysis of {{companyName}} is confirmed.
+vielen Dank für Ihr Interesse. Unser Demo-Termin für {{companyName}} ist bestätigt.
 
-I'll walk you through the findings with concrete suggestions. 15 minutes max.
+Demo: viego-ai.de/chat-demo
 
-[Confirm the appointment]({{meetingLink}})
-
-Best,
-{{senderName}}`,
+Mit freundlichen Grüßen
+Mustafa
+Viego AI
+info@viego-ai.de`,
   },
   {
     id: "en_proposal_followup",
-    name: "Proposal Follow-Up (EN)",
+    name: "Angebots-Nachfrage (EN→DE)",
     category: "proposal_followup",
     language: "en",
-    subject: "Proposal summary for {{companyName}}",
-    body: `Hi {{contactName}},
+    subject: "Unser Angebot für {{companyName}}",
+    body: `Sehr geehrte Damen und Herren,
 
-Following our conversation, here's a summary of what we discussed for {{companyName}}:
+anbei eine Zusammenfassung für {{companyName}}:
 
 {{improvementArea}}
 
-Expected impact: {{estimatedImpact}}.
+Bei Fragen stehe ich Ihnen gerne zur Verfügung.
 
-Let me know if you'd like to move forward with this.
+Mit freundlichen Grüßen
+Mustafa
+Viego AI
+info@viego-ai.de`,
+  },
 
-[View the proposal]({{meetingLink}})
+  // --- German templates (Viego AI chatbot — formal Sie/Ihnen) ---
+  {
+    id: "de_cold_no_website",
+    name: "Cold Outreach, kein Website (DE)",
+    category: "cold_no_website",
+    language: "de",
+    subject: "24/7 erreichbar für Ihre Mieter – KI-Assistent für {{companyName}}",
+    body: `Sehr geehrte Damen und Herren,
 
-Best,
-{{senderName}}`,
+bei meiner Recherche zu Hausverwaltungen in {{city}} bin ich auf {{companyName}} aufmerksam geworden.
+
+Viego AI ist ein KI-Assistent speziell für die Immobilienwirtschaft:
+- Beantwortet Mieteranfragen rund um die Uhr automatisch
+- Nimmt Schadensmeldungen strukturiert entgegen
+- Entlastet Ihr Team von repetitiven Routineaufgaben
+- 100% DSGVO-konform, Hosting in Deutschland
+
+Demo: viego-ai.de/chat-demo
+
+Mit freundlichen Grüßen
+Mustafa
+Viego AI
+info@viego-ai.de`,
+  },
+  {
+    id: "de_cold_has_website",
+    name: "Cold Outreach, mit Website (DE)",
+    category: "cold_has_website",
+    language: "de",
+    subject: "24/7 erreichbar für Ihre Mieter – KI-Assistent für {{companyName}}",
+    body: `Sehr geehrte Damen und Herren,
+
+bei meiner Recherche zu Hausverwaltungen in {{city}} bin ich auf {{companyName}} aufmerksam geworden. {{specificInsight}}.
+
+Viego AI ist ein KI-Assistent speziell für die Immobilienwirtschaft:
+- Beantwortet Mieteranfragen rund um die Uhr automatisch
+- Nimmt Schadensmeldungen strukturiert entgegen
+- Entlastet Ihr Team von repetitiven Routineaufgaben
+- 100% DSGVO-konform, Hosting in Deutschland
+
+Demo: viego-ai.de/chat-demo
+
+Mit freundlichen Grüßen
+Mustafa
+Viego AI
+info@viego-ai.de`,
+  },
+  {
+    id: "de_followup_1",
+    name: "Follow-Up 1, 3 Tage (DE)",
+    category: "followup_1",
+    language: "de",
+    subject: "Kurze Nachfrage: KI-Assistent für {{companyName}}",
+    body: `Sehr geehrte Damen und Herren,
+
+ich wollte kurz nachfragen, ob meine letzte Nachricht angekommen ist.
+
+Falls Sie Interesse haben, den Viego AI Assistenten für {{companyName}} in einer kurzen Demo zu sehen: viego-ai.de/chat-demo
+
+Mit freundlichen Grüßen
+Mustafa
+Viego AI
+info@viego-ai.de`,
+  },
+  {
+    id: "de_followup_2",
+    name: "Follow-Up 2, 7 Tage (DE)",
+    category: "followup_2",
+    language: "de",
+    subject: "Letzte Nachricht: Viego AI für {{companyName}}",
+    body: `Sehr geehrte Damen und Herren,
+
+ich melde mich ein letztes Mal bezüglich des Viego AI Assistenten für {{companyName}}.
+
+Hausverwaltungen, die unseren KI-Assistenten einsetzen, reduzieren den Aufwand für Routineanfragen um durchschnittlich 60%. Die Demo ist jederzeit verfügbar: viego-ai.de/chat-demo
+
+Mit freundlichen Grüßen
+Mustafa
+Viego AI
+info@viego-ai.de`,
+  },
+  {
+    id: "de_breakup",
+    name: "Break-Up, 14 Tage (DE)",
+    category: "breakup",
+    language: "de",
+    subject: "Kein weiterer Kontakt von unserer Seite",
+    body: `Sehr geehrte Damen und Herren,
+
+dies ist meine letzte Nachricht. Ich verstehe, dass der Zeitpunkt gerade nicht passt.
+
+Falls Sie zu einem späteren Zeitpunkt Interesse an einem KI-Assistenten für {{companyName}} haben, finden Sie uns unter viego-ai.de.
+
+Mit freundlichen Grüßen
+Mustafa
+Viego AI
+info@viego-ai.de`,
+  },
+  {
+    id: "de_meeting_confirm",
+    name: "Terminbestätigung (DE)",
+    category: "meeting_confirm",
+    language: "de",
+    subject: "Terminbestätigung: Viego AI Demo für {{companyName}}",
+    body: `Sehr geehrte Damen und Herren,
+
+vielen Dank für Ihr Interesse. Unser Demo-Termin für {{companyName}} ist hiermit bestätigt.
+
+Ich zeige Ihnen, wie der Viego AI Assistent Mieteranfragen automatisch beantwortet und Schadensmeldungen strukturiert entgegennimmt. Die Demo dauert maximal 15 Minuten.
+
+Mit freundlichen Grüßen
+Mustafa
+Viego AI
+info@viego-ai.de`,
+  },
+  {
+    id: "de_proposal_followup",
+    name: "Angebots-Nachfrage (DE)",
+    category: "proposal_followup",
+    language: "de",
+    subject: "Unser Angebot für {{companyName}}",
+    body: `Sehr geehrte Damen und Herren,
+
+anbei eine Zusammenfassung unseres Gesprächs zum Viego AI Assistenten für {{companyName}}:
+
+{{improvementArea}}
+
+Bei Fragen stehe ich Ihnen gerne zur Verfügung.
+
+Mit freundlichen Grüßen
+Mustafa
+Viego AI
+info@viego-ai.de`,
   },
 
   // --- Arabic templates (conversational, professional) ---

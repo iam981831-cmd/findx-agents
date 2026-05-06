@@ -160,7 +160,7 @@ export function triggerAgentRun(
   query: string,
   sync = false,
   maxResults?: number,
-  language?: "en" | "nl" | "ar",
+  language?: "en" | "nl" | "ar" | "de",
 ): Promise<{ runId: string; status: string } | AgentPipelineRun> {
   return fetchApi("/agents/run", {
     method: "POST",

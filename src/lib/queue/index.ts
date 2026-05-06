@@ -4,10 +4,13 @@ const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
 
 export function createRedisConnection() {
   const url = new URL(REDIS_URL);
+  const isTLS = url.protocol === "rediss:";
   return {
     host: url.hostname,
-    port: parseInt(url.port, 10) || 6379,
-    password: url.password || undefined,
+    port: parseInt(url.port, 10) || (isTLS ? 6380 : 6379),
+    password: url.password ? decodeURIComponent(url.password) : undefined,
+    username: url.username ? decodeURIComponent(url.username) : undefined,
+    tls: isTLS ? {} : undefined,
   };
 }
 

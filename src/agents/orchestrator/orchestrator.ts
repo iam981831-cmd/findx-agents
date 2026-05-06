@@ -291,6 +291,14 @@ export class AgentOrchestrator {
       const lead = await prisma.lead.findUnique({ where: { id: leadId } });
       if (!lead?.website) continue;
 
+      // Skip publicly listed / large companies — not Mittelstand targets
+      if (/\b(AG|SE|KGaA|GmbH\s*&\s*Co\.\s*KGaA)\b/.test(lead.businessName)) {
+        console.log(`[Orchestrator] Skipping ${lead.businessName}: publicly listed company`);
+        continue;
+      }
+
+      const mittelstandScore: number = lead.leadScore ?? 50;
+
       // Run analysis — when batch is full, wait for a slot
       const analysisPromise = (async () => {
         try {
@@ -302,6 +310,10 @@ export class AgentOrchestrator {
             industry: lead.industry,
             email: lead.email,
             phone: lead.phone,
+            mittelstandScore,
+            scoringHints: {
+              targetCity: ["Berlin", "Hamburg", "München", "Frankfurt", "Köln", "Düsseldorf"].includes(lead.city),
+            },
           });
 
           await runAgentWithLogging(
@@ -326,6 +338,7 @@ export class AgentOrchestrator {
                 industry: lead.industry,
                 email: lead.email,
                 phone: lead.phone,
+                mittelstandScore,
                 _retry: true,
                 _extendedTimeout: true,
               });
@@ -369,76 +382,79 @@ export class AgentOrchestrator {
     return { leadsAnalyzed };
   }
 
+  private generateEmail(companyName: string, city: string): { subject: string; body: string } {
+    return {
+      subject: `24/7 erreichbar für Ihre Mieter – KI-Assistent für ${companyName}`,
+      body: `Sehr geehrte Damen und Herren,
+
+bei meiner Recherche zu Hausverwaltungen in ${city} bin ich auf ${companyName} aufmerksam geworden.
+
+Viego AI ist ein KI-Assistent speziell für die Immobilienwirtschaft:
+- Beantwortet Mieteranfragen rund um die Uhr – automatisch
+- Nimmt Schadensmeldungen strukturiert entgegen
+- Entlastet Ihr Team von repetitiven Routineaufgaben
+- 100% DSGVO-konform, Hosting in Deutschland
+
+Damit Sie sich selbst ein Bild machen können:
+🌐 www.viego-ai.de
+💬 viego-ai.de/chat-demo
+
+Mit freundlichen Grüßen
+Mustafa
+Viego AI
+info@viego-ai.de`,
+    };
+  }
+
   private async runOutreach(
     input: PipelineInput,
     analyzedQueue: AsyncQueue<{ leadId: string }>,
     errors: string[],
   ): Promise<{ outreachSent: number }> {
-    const outreachAgent = await loadAgentConfig("outreach");
-    const outreachLanguage = input.language ?? "en";
     let outreachSent = 0;
 
     console.log(`[Orchestrator] Outreach waiting for analyzed leads...`);
 
     while (true) {
       const item = await analyzedQueue.pop();
-      if (item === undefined) break; // Queue closed
+      if (item === undefined) break;
 
-      // Check cancellation
       const current = await prisma.agentPipelineRun.findUnique({ where: { id: input.pipelineRunId } });
       if (current?.status === "cancelled") break;
 
-      const lead = await prisma.lead.findUnique({
-        where: { id: item.leadId },
-        include: { analyses: { orderBy: { analyzedAt: "desc" }, take: 1 } },
-      });
+      const lead = await prisma.lead.findUnique({ where: { id: item.leadId } });
       if (!lead) continue;
 
-      const latestAnalysis = lead.analyses?.[0];
-      if (!latestAnalysis) continue;
-
       try {
-        const outreachContext = JSON.stringify({
-          language: outreachLanguage,
-          lead: {
-            id: lead.id,
-            businessName: lead.businessName,
-            city: lead.city,
-            industry: lead.industry,
-            website: lead.website,
-            email: lead.email,
-            phone: lead.phone,
-          },
-          analysis: {
-            score: latestAnalysis.score,
-            findings: latestAnalysis.findings,
-            opportunities: latestAnalysis.opportunities,
-            socialPresence: latestAnalysis.socialPresence,
-            competitors: latestAnalysis.competitors,
-            serviceGaps: latestAnalysis.serviceGaps,
-            revenueImpact: latestAnalysis.revenueImpact,
-            crawlData: latestAnalysis.crawlData,
-            structuredData: latestAnalysis.structuredData,
-            competitorAnalysis: latestAnalysis.competitorAnalysis,
-            contentAudit: latestAnalysis.contentAudit,
-            seoAudit: latestAnalysis.seoAudit,
-            formData: latestAnalysis.formData,
-          },
-        }, null, 2);
+        const { subject, body } = this.generateEmail(lead.businessName, lead.city);
 
-        const outreachPrompt = `IMPORTANT: Write this email in ${outreachLanguage === "nl" ? "Dutch" : outreachLanguage === "ar" ? "Arabic" : "English"}. You MUST pass language: "${outreachLanguage}" to the render_template tool.\n\n${outreachContext}`;
+        await prisma.outreach.create({
+          data: {
+            leadId: lead.id,
+            subject,
+            body,
+            status: "draft",
+            personalizedDetails: {},
+          },
+        });
 
-        await runAgentWithLogging(
-          outreachAgent,
-          { agentId: outreachAgent.id, pipelineRunId: input.pipelineRunId, phase: "outreach" },
-          outreachPrompt,
-        );
+        await prisma.lead.update({
+          where: { id: lead.id },
+          data: { status: "contacting" },
+        });
+
+        console.log(`[Orchestrator] Email saved for ${lead.businessName}`);
         outreachSent++;
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         errors.push(`Outreach failed for ${lead.businessName}: ${msg}`);
       }
     }
+
+    await prisma.agentPipelineRun.update({
+      where: { id: input.pipelineRunId },
+      data: { emailsDrafted: outreachSent },
+    });
 
     console.log(`[Orchestrator] Outreach complete. Emails drafted: ${outreachSent}`);
     return { outreachSent };

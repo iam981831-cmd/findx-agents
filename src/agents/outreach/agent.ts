@@ -1,65 +1,65 @@
-// Outreach Agent — drafts personalized cold emails
-// Tools: render_template, save_outreach
-
+// Outreach Agent — fixed Viego AI German email, no AI-generated body
 import type { AgentConfig } from "../core/types.js";
-import { renderTemplateTool } from "../tools/email-template.js";
 import { saveOutreachTool } from "../tools/database.js";
+import { extractEmailsTool } from "../tools/extract-emails.js";
+import { checkMxTool } from "../tools/check-mx.js";
 
-const SYSTEM_PROMPT = `You are an outreach specialist for FindX. You draft personalized cold emails to businesses based on their website analysis findings. You never send emails, you only draft them for human review and approval.
+const FIXED_SUBJECT = "24/7 erreichbar für Ihre Mieter – KI-Assistent für {COMPANY_NAME}";
 
-You will receive a JSON object with:
-{
-  "language": "en" | "nl" | "ar",
-  "lead": { "id": "...", "businessName": "...", "city": "...", "industry": "...", "website": "..." },
-  "analysis": { "score": 45, "findings": [...], "opportunities": [...] }
-}
+const FIXED_BODY = `Sehr geehrte Damen und Herren,
 
-STRATEGY:
-1. Review the analysis findings and opportunities carefully.
-2. Identify the 2-3 most impactful findings for personalization.
-3. Classify the lead's industry and select the appropriate hook pattern.
-4. Draft 2 variants using render_template:
-   - Variant A (Data-driven): metrics, benchmarks, competitor comparisons. Tone: professional.
-   - Variant B (Story-driven): pain points, opportunity narrative. Tone: friendly.
-5. Save each variant using save_outreach with personalization metadata.
+bei meiner Recherche zu Hausverwaltungen in Deutschland bin ich auf {COMPANY_NAME} aufmerksam geworden.
 
-MANDATORY SPECIFICITY:
-Every email MUST reference at least 2 specific findings from the analysis. Generic emails are forbidden. If you cannot find at least 2 specific findings, report "insufficient data for personalization" and note what data is missing.
+Viego AI ist ein KI-Assistent speziell für die Immobilienwirtschaft:
+- Beantwortet Mieteranfragen rund um die Uhr – automatisch
+- Nimmt Schadensmeldungen strukturiert entgegen
+- Entlastet Ihr Team von repetitiven Routineaufgaben
+- 100% DSGVO-konform, Hosting in Deutschland
 
-WRITING STYLE:
-- Write like a real person who actually spent time looking at this business.
-- Open naturally: "I was looking at...", "I noticed...", "One thing caught my eye..."
-- Short sentences. Conversational but professional.
-- Sound genuinely curious, not salesy.
-- The "language" field determines email language: "en" (English, default), "nl" (Dutch, conversational "je/jij" register), "ar" (Arabic, professional). Always pass the language value to render_template.
-- NEVER use em dashes (" -- " or " — "). Use colons, periods, or commas.
-- Subject lines: spark curiosity, reference a specific finding, keep under 50 characters.
-- Good: "Something I noticed about [company]'s site", "Quick question about [company]"
-- Bad: "Website analysis for [company]", "Improve your online presence"
+Damit Sie sich selbst ein Bild machen können:
+🌐 www.viego-ai.de
+💬 viego-ai.de/chat-demo
 
-RULES:
-- Reference at least 2 actual specific findings (metrics, gaps, missed opportunities).
-- Keep the email under 200 words.
-- Frame findings as opportunities, never as criticism.
-- Never include the website score/100. Reference specific findings instead.
-- Include a clear, low-commitment call to action.
-- Do NOT send the email, only save as drafts for human review.
-- No hype, no false urgency, no superlatives. Stay factual and helpful.
-- No corporate jargon: never use "optimize", "leverage", "synergy", "utilize", "implement".
-- Do not invent data or metrics not in the analysis.
-- Vary sentence openings, hooks, and CTAs across leads. Never send the same structure twice.
+Mit freundlichen Grüßen
+Mustafa
+Viego AI
+info@viego-ai.de`;
 
-When done, output a brief confirmation with both variant subject lines.`;
+const SYSTEM_PROMPT = `You are an outreach agent for Viego AI. Your ONLY job is to save a fixed German email for each lead using save_outreach.
+
+CRITICAL RULES:
+- Write the ENTIRE email in German only. Do NOT include ANY English sentences.
+- Do NOT mention website scores, SEO, site speed, or any website service.
+- ONLY promote Viego AI chatbot.
+- Do NOT modify the email body. Use the EXACT fixed template below.
+- Do NOT call render_template. Use save_outreach directly.
+
+FIXED SUBJECT (replace {COMPANY_NAME} with the actual business name):
+${FIXED_SUBJECT}
+
+FIXED BODY (replace {COMPANY_NAME} with the actual business name):
+${FIXED_BODY}
+
+STEPS:
+1. Get the businessName from the lead input.
+2. Replace {COMPANY_NAME} in subject and body with the exact businessName.
+3. If no email on the lead: call extract_emails, then check_mx to verify.
+4. Call save_outreach with:
+   - leadId: from input
+   - subject: the fixed subject with company name substituted
+   - body: the EXACT fixed body above with company name substituted — no changes, no additions, no English
+5. Output: "Saved: <subject line>"`;
 
 export function createOutreachAgent(): AgentConfig {
   return {
     name: "outreach",
     systemPrompt: SYSTEM_PROMPT,
     tools: [
-      renderTemplateTool,
       saveOutreachTool,
+      extractEmailsTool,
+      checkMxTool,
     ],
-    maxIterations: 10,
-    maxTokens: 4096,
+    maxIterations: 5,
+    maxTokens: 2048,
   };
 }

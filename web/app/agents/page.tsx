@@ -59,7 +59,7 @@ export default function AgentsPage() {
   const [tab, setTab] = useState<Tab>("pipeline");
   const [query, setQuery] = useState("");
   const [maxResults, setMaxResults] = useState<string>("5");
-  const [language, setLanguage] = useState<"en" | "nl" | "ar">("en");
+  const [language, setLanguage] = useState<"en" | "nl" | "ar" | "de">("de");
   const [running, setRunning] = useState(false);
   const [runs, setRuns] = useState<AgentPipelineRun[]>([]);
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
@@ -259,9 +259,10 @@ export default function AgentsPage() {
               <div className="relative w-28">
                 <select
                   value={language}
-                  onChange={(e) => setLanguage(e.target.value as "en" | "nl" | "ar")}
+                  onChange={(e) => setLanguage(e.target.value as "en" | "nl" | "ar" | "de")}
                   className="w-full px-3 py-2.5 border border-slate-700 rounded-xl text-sm bg-slate-800 text-slate-200 text-center appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
+                  <option value="de">Deutsch</option>
                   <option value="en">English</option>
                   <option value="nl">Nederlands</option>
                   <option value="ar">العربية</option>
