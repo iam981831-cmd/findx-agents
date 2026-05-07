@@ -8,6 +8,7 @@
     "dev": "tsx watch --require ./src/setup-tmp.cjs src/server.ts",
     "dev:web": "npm run dev --workspace=web",
     "build": "tsc",
+    "start": "node dist/server.js",
     "build:web": "npm run build --workspace=web",
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",

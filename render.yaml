@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: findx-backend
+    runtime: node
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: node dist/server.js
+    envVars:
+      - key: DATABASE_URL
+        value: postgresql://neondb_owner:npg_CMGUoPz9lhb0@ep-withered-lake-abnvt2fb-pooler.eu-west-2.aws.neon.tech/neondb?sslmode=require
+      - key: REDIS_URL
+        value: rediss://default:gQAAAAAAAanJAAIgcDE4OWJjZDc0NTk0NmM0NDRjYjRhMjE4ZTI3Y2M5Nzk2Zg@smooth-bullfrog-109001.upstash.io:6379
+      - key: GLM_API_KEY
+        value: 7a6b933ec103467da12439ca96b2d36f.MmDmjo3YHQo9nqOY
+      - key: GLM_BASE_URL
+        value: https://api.z.ai/api/anthropic
+      - key: GLM_MODEL
+        value: glm-4-flash
+      - key: GOOGLE_MAPS_API_KEY
+        value: AIzaSyBLKrmWYKs1sdK2WbczGXDD9IhzLnsl9jM
+      - key: DEFAULT_COUNTRY
+        value: DE
+      - key: DEFAULT_LANGUAGE
+        value: de
+      - key: DEFAULT_CITY
+        value: Berlin
+      - key: EMAIL_FROM
+        value: info@viego-ai.de
+      - key: NODE_ENV
+        value: production
